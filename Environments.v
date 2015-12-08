@@ -38,7 +38,7 @@ Definition env A :=
 
 (* The empty environment is undefined everywhere. *)
 
-Definition empty A : env A :=
+Definition empty {A} : env A :=
   nil.
 
 (* Environment lookup. *)
@@ -148,7 +148,7 @@ Qed. (* Maybe this should be the definition of [raw_insert]. *)
 
 Lemma empty_eq_insert:
   forall A x o (e : env A),
-  empty _ = insert x o e ->
+  empty = insert x o e ->
   False.
 Proof.
   unfold empty; intros; destruct x.
