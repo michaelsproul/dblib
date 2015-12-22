@@ -1200,5 +1200,5 @@ Hint Resolve length_concat_replicate : length construction_closed.
 (* Make some definitions opaque, so that Coq does not over-simplify in
    unexpected (and fragile) ways. *)
 
-Global Opaque empty lookup raw_insert map.
+Global Opaque lookup raw_insert map.
 
