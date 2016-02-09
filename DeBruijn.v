@@ -141,6 +141,17 @@ Instance Lift_idx : Lift nat := {
     if le_gt_dec k x then w + x else x
 }.
 
+(* Unlift? *)
+Class Unlift (T : Type) := {
+  unlift:
+    nat -> nat -> T -> T
+}.
+
+Instance Unlift_idx : Unlift nat := {
+  unlift w k x :=
+    if le_gt_dec k x then x - w else x
+}.
+
 (* [shift k t] is an abbreviation for [lift 1 k t]. *)
 
 (* From a programming language point of view, [shift] can be understood
@@ -154,6 +165,8 @@ Instance Lift_idx : Lift nat := {
 
 Notation shift :=
   (lift 1).
+Notation unshift :=
+  (unlift 1).
 
 (* [subst v k t] is the term obtained by substituting the value [v] for
    the variable [k] in the term [t]. *)
@@ -632,6 +645,12 @@ Proof.
   reflexivity.
 Qed.
 
+(* Generic definition of [unlift] in terms of [traverse]. *)
+Instance Unlift_Traverse `{Var V, Traverse V T} : Unlift T := {
+  unlift w k t :=
+    traverse (fun l x => var (unlift w (l + k) x)) 0 t
+}.
+
 (* This auxiliary tactic simplifies expressions of the form [x + 0] in
    the goal. It does *not* affect [x + ?y] where [y] is a
    meta-variable. *)
@@ -665,11 +684,29 @@ Proof.
   just_do_it.
 Qed.
 
+Lemma recognize_unlift:
+  forall `{Var V, Traverse V T},
+  TraverseRelative ->
+  forall w k1 k2 t,
+  forall traverse_,
+  traverse_ = traverse -> (* helps rewrite *)
+  traverse_ (fun l x => var (unlift w (l + k2) x)) k1 t =
+  unlift w (k1 + k2) t.
+Proof.
+  intros. subst. simpl.
+  eapply traverse_relative; [ | instantiate (1 := k1); omega ].
+  just_do_it.
+Qed.
+
 (* This tactic recognizes an application of the user's [traverse_term]
    function that is really a [lift] operation, and folds it. *)
 
 Ltac recognize_lift :=
   rewrite recognize_lift by eauto with typeclass_instances;
+  repeat rewrite plus_0_l. (* useful when [k1] is zero *)
+
+Ltac recognize_unlift :=
+  rewrite recognize_unlift by eauto with typeclass_instances;
   repeat rewrite plus_0_l. (* useful when [k1] is zero *)
 
 Ltac recognize_lift_in h :=
@@ -724,6 +761,41 @@ Ltac simpl_lift :=
        that we have just simplified *)
     match type of _traverse with (nat -> nat -> ?V) -> nat -> ?T -> ?T =>
       repeat rewrite (@recognize_lift V _ T _ _)  in h by eauto with typeclass_instances
+    end;
+    repeat rewrite plus_0_l in h (* useful when [k1] is zero and we are at a leaf *)
+  
+  end.
+
+Ltac simpl_unlift :=
+  match goal with
+
+  (* Case: [_traverse] appears in the goal. *)
+  (* this binds the meta-variable [_traverse] to the user's [traverse_term] *)
+  |- context[?_traverse (fun l x : nat => var (lift ?w (l + ?k) x)) _ _] =>
+      (* this causes the reduction of the fixpoint: *)
+    unfold _traverse; fold _traverse;
+    (* we now have a term of the form [TApp (traverse_term ...) ...].
+       There remains to recognize the definition of [lift]. *)
+    plus_0_r; (* useful when we have traversed a binder: 1 + 0 is 1 *)
+    (* use [recognize_lift] at the specific type of the [_traverse] function
+       that we have just simplified *)
+    match type of _traverse with (nat -> nat -> ?V) -> nat -> ?T -> ?T =>
+      repeat rewrite (@recognize_lift V _ T _ _) by eauto with typeclass_instances
+    end;
+    repeat rewrite plus_0_l (* useful when [k1] is zero and we are at a leaf *)
+
+  (* Case: [_traverse] appears in a hypothesis. *)
+  (* this binds the meta-variable [_traverse] to the user's [traverse_term] *)
+  | h: context[?_traverse (fun l x : nat => var (lift ?w (l + ?k) x)) _ _] |- _ =>
+    (* this causes the reduction of the fixpoint: *)
+    unfold _traverse in h; fold _traverse in h;
+    (* we now have a term of the form [TApp (traverse_term ...) ...].
+       There remains to recognize the definition of [lift]. *)
+    plus_0_r_in h; (* useful when we have traversed a binder: 1 + 0 is 1 *)
+    (* use [recognize_lift] at the specific type of the [_traverse] function
+       that we have just simplified *)
+    match type of _traverse with (nat -> nat -> ?V) -> nat -> ?T -> ?T =>
+      repeat rewrite (@recognize_unlift V _ T _ _)  in h by eauto with typeclass_instances
     end;
     repeat rewrite plus_0_l in h (* useful when [k1] is zero and we are at a leaf *)
   
