@@ -651,6 +651,15 @@ Instance Unlift_Traverse `{Var V, Traverse V T} : Unlift T := {
     traverse (fun l x => var (unlift w (l + k) x)) 0 t
 }.
 
+Lemma expand_unlift:
+  forall `{Var V, Traverse V T},
+  forall w k t,
+  unlift w k t =
+  traverse (fun l x => var (unlift w (l + k) x)) 0 t.
+Proof.
+  reflexivity.
+Qed.
+
 (* This auxiliary tactic simplifies expressions of the form [x + 0] in
    the goal. It does *not* affect [x + ?y] where [y] is a
    meta-variable. *)
@@ -771,7 +780,7 @@ Ltac simpl_unlift :=
 
   (* Case: [_traverse] appears in the goal. *)
   (* this binds the meta-variable [_traverse] to the user's [traverse_term] *)
-  |- context[?_traverse (fun l x : nat => var (lift ?w (l + ?k) x)) _ _] =>
+  |- context[?_traverse (fun l x : nat => var (unlift ?w (l + ?k) x)) _ _] =>
       (* this causes the reduction of the fixpoint: *)
     unfold _traverse; fold _traverse;
     (* we now have a term of the form [TApp (traverse_term ...) ...].
@@ -780,13 +789,13 @@ Ltac simpl_unlift :=
     (* use [recognize_lift] at the specific type of the [_traverse] function
        that we have just simplified *)
     match type of _traverse with (nat -> nat -> ?V) -> nat -> ?T -> ?T =>
-      repeat rewrite (@recognize_lift V _ T _ _) by eauto with typeclass_instances
+      repeat rewrite (@recognize_unlift V _ T _ _) by eauto with typeclass_instances
     end;
     repeat rewrite plus_0_l (* useful when [k1] is zero and we are at a leaf *)
 
   (* Case: [_traverse] appears in a hypothesis. *)
   (* this binds the meta-variable [_traverse] to the user's [traverse_term] *)
-  | h: context[?_traverse (fun l x : nat => var (lift ?w (l + ?k) x)) _ _] |- _ =>
+  | h: context[?_traverse (fun l x : nat => var (unlift ?w (l + ?k) x)) _ _] |- _ =>
     (* this causes the reduction of the fixpoint: *)
     unfold _traverse in h; fold _traverse in h;
     (* we now have a term of the form [TApp (traverse_term ...) ...].
@@ -812,6 +821,18 @@ Ltac simpl_lift_goal :=
   repeat simpl_lift;
   (* if we have exposed applications of [lift_idx], try simplifying them away *)
   repeat lift_idx;
+  (* if this exposes uses of [var], replace them with the user's [TVar] constructor *)
+  simpl var.
+
+Ltac simpl_unlift_goal :=
+  (* this replaces [lift] with applications of [traverse] *)
+  repeat rewrite @expand_unlift;
+  (* this replaces the generic [traverse] with the user's [_traverse] functions *)
+  simpl traverse;
+  (* this simplifies applications of each [_traverse] function and folds them back *)
+  repeat simpl_unlift;
+  (* if we have exposed applications of [lift_idx], try simplifying them away *)
+  (* repeat unlift_idx; *)
   (* if this exposes uses of [var], replace them with the user's [TVar] constructor *)
   simpl var.
 
