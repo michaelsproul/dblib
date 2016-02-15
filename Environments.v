@@ -378,7 +378,7 @@ Hint Extern 1 (_ = raw_insert _ _ _) =>
 
 Lemma insert_nil:
   forall A x a (e : env A),
-  insert x a e = nil ->
+  raw_insert x a e = nil ->
   False.
 Proof.
   destruct x; destruct e; simpl; congruence.
