@@ -16,3 +16,4 @@ cores
 *.cmx
 *.o
 Makefile.coq_makefile
+*.aux
