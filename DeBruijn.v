@@ -1,6 +1,6 @@
 Set Implicit Arguments.
 Generalizable All Variables.
-Require Import DbLib.DblibTactics.
+Require Import DblibTactics.
 
 (* ---------------------------------------------------------------------------- *)
 
@@ -1777,4 +1777,3 @@ Qed.
 
 Global Opaque lift.
 Global Opaque subst.
-

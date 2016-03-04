@@ -40,4 +40,3 @@ Ltac dblib_inspect_cases :=
 
 Ltac dblib_by_cases :=
   repeat dblib_inspect_cases; try solve [ intros; elimtype False; omega ]; intros.
-

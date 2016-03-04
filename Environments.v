@@ -1,8 +1,8 @@
 Set Implicit Arguments.
 Require Import List.
 Opaque plus. (* avoid pesky reductions *)
-Require Import DbLib.DblibTactics.
-Require Import DbLib.DeBruijn.
+Require Import DblibTactics.
+Require Import DeBruijn.
 
 (* ---------------------------------------------------------------------------- *)
 
@@ -1201,4 +1201,3 @@ Hint Resolve length_concat_replicate : length construction_closed.
    unexpected (and fragile) ways. *)
 
 Global Opaque lookup raw_insert map.
-
