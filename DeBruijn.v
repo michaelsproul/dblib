@@ -166,8 +166,8 @@ Instance Lower_idx : Lower nat := {
 Notation shift :=
   (lift 1).
 
-(* [drop k t] is an abbreviation for [lower 1 k t] *)
-Notation drop :=
+(* [unshift k t] is an abbreviation for [lower 1 k t] *)
+Notation unshift :=
   (lower 1).
 
 (* [subst v k t] is the term obtained by substituting the value [v] for
