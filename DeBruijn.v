@@ -444,6 +444,14 @@ Class Rotate1SelfInverse `{Var V, Lift T, Subst V T} := {
     rotate 1 (rotate 1 t) = t
 }.
 
+(* [lift] and [lower] are inverse functions *)
+
+Class LiftLower `{Lift T, Lower T} := {
+  lift_lower:
+    forall t k w,
+    lower w (k + w) (lift w k t) = t
+}.
+
 (* ---------------------------------------------------------------------------- *)
 (* ---------------------------------------------------------------------------- *)
 
@@ -648,10 +656,13 @@ Proof.
 Qed.
 
 (* Generic definition of [lower] in terms of [traverse]. *)
+
 Instance Lower_Traverse `{Var V, Traverse V T} : Lower T := {
   lower w k t :=
     traverse (fun l x => var (lower w (l + k) x)) 0 t
 }.
+
+(* This lemma repeats the definition (!) and is useful when rewriting. *)
 
 Lemma expand_lower:
   forall `{Var V, Traverse V T},
@@ -1250,6 +1261,23 @@ Proof.
   eapply (traverse_extensional _). intros.
   do 2 rewrite traverse_identifies_var.
   just_do_it.
+Qed.
+
+Instance LiftLower_Traverse `{Lift T, Lower T, Traverse T} :
+  Lift T ->
+  Lower T ->
+  LiftLower.
+Proof.
+  constructor. intros.
+  unfold lower.
+  unfold lift, Lift_Traverse.
+
+  constructor. intros.
+  destruct (le_gt_dec s k); do 2 lift_idx.
+  (* Case [s <= k]. *)
+  eapply lift_subst_2. omega.
+  (* Case [s > k]. *)
+  eapply lift_subst_1. omega.
 Qed.
 
 (* ------------------------------------------------------------------------------ *)
